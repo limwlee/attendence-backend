@@ -1,59 +1,227 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Attendance App - Backend (API)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This is the **backend API** for the Attendance System, built with **Laravel (PHP)**.
 
-## About Laravel
+It provides authentication and attendance endpoints that are consumed by the mobile/frontend app.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 1. Dependencies / Prerequisites
+- **PHP**: 8.1+
+- **Composer**
+- **MySQL** 
+- **Git**
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 2. How to Run Locally (Backend)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### 2.1 Clone the Repository
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+git clone https://github.com/limwlee/attendance-backend.git
+cd attendance-backend
+```
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 2.2 Install PHP Dependencies
 
-### Premium Partners
+```bash
+composer install
+```
+---
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 2.3 Configure `.env`
+generate an app key:
 
-## Contributing
+```bash
+php artisan key:generate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Edit `.env` and configure these values:
 
-## Code of Conduct
+```env
+APP_NAME="Attendance API"
+APP_ENV=local
+APP_KEY=base64:*****          # Change to the key that generate
+APP_DEBUG=true
+APP_URL=http://localhost:8000
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=attendance_db     # Change to your DB name
+DB_USERNAME=root              # your DB user
+DB_PASSWORD=                  # your DB password
 
-## Security Vulnerabilities
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 2.4 Run Migrations & Seed Data
 
-## License
+Run database migrations:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+php artisan migrate
+```
+
+create a user data:
+
+```bash
+php artisan migrate --seed
+```
+Refer to the seed location:  `database/seeders/UserSeeder.php`.
+
+- Email: `test@example.com`
+- Password: `password123`
+
+---
+
+### 2.5 Start the Server
+
+Run the Laravel development server:
+
+```bash
+php artisan serve
+```
+
+By default, it runs at:
+
+```text
+http://127.0.0.1:8000
+```
+
+---
+
+## 3. Backend API List
+
+Below are the main API endpoints exposed by this backend.  
+All routes are prefixed with `/api` by default in `routes/api.php`.
+
+### 3.1 `POST /api/login` – Authenticate User
+
+- **Description**: Authenticates a user with email & password.
+- **Request body** (JSON):
+
+```json
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+```
+
+- **Response** :
+
+```json
+{
+    "message": "Login successful",
+    "token": "*|*****",
+    "user": {
+        "id": 1,
+        "name": "Test User",
+        "email": "test@example.com"
+    }
+}
+```
+
+---
+
+### 3.2 `POST /api/clock-in` – Create Clock-in Record
+
+- **Auth**: Requires a valid authenticated user.
+- **Description**: Creates a clock-in record for the current user for the current time.
+- **Request**: No body needed.
+- **Response** (example):
+
+```json
+{
+    "message": "Clock in recorded.",
+    "attendance": {
+        "user_id": 1,
+        "date": "2025-11-25T00:00:00.000000Z",
+        "clock_in": "2025-11-25T15:52:23.000000Z",
+        "updated_at": "2025-11-25T15:52:23.000000Z",
+        "created_at": "2025-11-25T15:52:23.000000Z",
+        "id": 1
+    }
+```
+
+---
+
+### 3.3 `POST /api/clock-out` – Create Clock-out Record
+
+- **Auth**: Requires a valid authenticated user.
+- **Description**: Updates the current day's attendance record with a clock-out time.
+- **Response** (example):
+
+```json
+{
+    "message": "Clock out recorded.",
+    "attendance": {
+        "id": 4,
+        "user_id": 1,
+        "date": "2025-11-25T16:00:00.000000Z",
+        "clock_in": "2025-11-25T19:38:12.000000Z",
+        "clock_out": "2025-11-25T19:38:16.000000Z",
+        "created_at": "2025-11-25T19:38:12.000000Z",
+        "updated_at": "2025-11-25T19:38:16.000000Z"
+    }
+}
+```
+
+- **Validation** :
+  - Prevent clock-out if user has not clocked in.
+  - Prevent multiple clock-out for the same day.
+
+---
+
+### 3.4 `GET /api/history` – Fetch Attendance History
+
+- **Auth**: Requires a valid authenticated user.
+- **Description**: Returns a list of attendance records for the currently logged-in user.
+- **Response** (example):
+
+```json
+{
+    "data": [
+        {
+            "date": "2025-11-25T16:00:00.000000Z",
+            "clock_in": "2025-11-26 03:38",
+            "clock_out": "2025-11-26 03:38"
+        }
+    ]
+}
+```
+
+---
+
+## 4. Configuring the Backend URL in the Mobile App
+```js
+// services/api.js
+const API_BASE_URL = "http://192.168.100.5:8000";
+```
+
+- When running backend locally: `php artisan serve --host=0.0.0.0 --port=8000`
+- On the same WiFi network, use your pc’s local IP.
+
+---
+
+## 5. Any Other Relevant Information
+
+- Authentication middleware like `auth:sanctum` protects clock-in/clock-out/attendance routes.
+  
+- Timezone configuration can be set in `config/app.php`:
+
+```php
+'timezone' => 'Asia/Kuala_Lumpur',
+```
+
+- You can clear and reset the database anytime with:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+This will drop all tables, run all migrations again, and re-seed the demo data.
+
+---
