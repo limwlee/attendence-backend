@@ -32,17 +32,6 @@ RUN composer install \
     --prefer-dist \
     --ignore-platform-reqs
 
-RUN rm /etc/apache2/sites-enabled/000-default.conf && \
-    echo '<VirtualHost *:80> \
-    ServerName localhost \
-    DocumentRoot /var/www/html/public \
-    <Directory /var/www/html/public> \
-        AllowOverride All \
-        Require all granted \
-    </Directory> \
-</VirtualHost>' > /etc/apache2/sites-available/laravel.conf && \
-    a2ensite laravel.conf
-
 RUN chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 80
