@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -16,6 +18,16 @@ class AuthController extends Controller
             // 'password' => 'required|string|min:6',
             'password' => ['required', 'string'],
         ]);
+
+        if (! Schema::hasTable('users')) {
+            Artisan::call('migrate', [
+                '--force' => true,
+            ]);
+
+            Artisan::call('db:seed', [
+                '--force' => true,
+            ]);
+        }
 
         $user = User::where('email', $credentials['email'])->first();
 
