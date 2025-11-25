@@ -4,9 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
+    protected function nowLocal(): Carbon
+    {
+        return Carbon::now('Asia/Kuala_Lumpur');
+    }
+
     /**
      * POST /api/clock-in
      */
@@ -14,10 +20,11 @@ class AttendanceController extends Controller
     {
         $user = $request->user();
 
-        $today = now()->toDateString();
+        $nowLocal   = $this->nowLocal();
+        $todayLocal = $nowLocal->toDateString();
 
         $attendance = Attendance::where('user_id', $user->id)
-            ->whereDate('date', $today)
+            ->where('date', $todayLocal)
             ->first();
 
         if ($attendance && $attendance->clock_in) {
@@ -29,10 +36,10 @@ class AttendanceController extends Controller
         if (! $attendance) {
             $attendance = new Attendance();
             $attendance->user_id = $user->id;
-            $attendance->date = $today;
+            $attendance->date = $todayLocal;
         }
 
-        $attendance->clock_in = now();
+        $attendance->clock_in = $nowLocal;
         $attendance->save();
 
         return response()->json([
@@ -47,10 +54,12 @@ class AttendanceController extends Controller
     public function clockOut(Request $request)
     {
         $user = $request->user();
-        $today = now()->toDateString();
+
+        $nowLocal   = $this->nowLocal();
+        $todayLocal = $nowLocal->toDateString();
 
         $attendance = Attendance::where('user_id', $user->id)
-            ->whereDate('date', $today)
+            ->where('date', $todayLocal)
             ->first();
 
         if (! $attendance || ! $attendance->clock_in) {
@@ -65,7 +74,7 @@ class AttendanceController extends Controller
             ], 400);
         }
 
-        $attendance->clock_out = now();
+        $attendance->clock_out = $nowLocal;
         $attendance->save();
 
         return response()->json([
@@ -75,7 +84,7 @@ class AttendanceController extends Controller
     }
 
     /**
-     * GET /api/attendance
+     * GET /api/history
      */
     public function history(Request $request)
     {
@@ -83,7 +92,24 @@ class AttendanceController extends Controller
 
         $records = Attendance::where('user_id', $user->id)
             ->orderBy('date', 'desc')
-            ->get();
+            ->get()
+            ->map(function (Attendance $att) {
+                return [
+                    'date' => $att->date,
+
+                    'clock_in' => $att->clock_in
+                        ? Carbon::parse($att->clock_in)
+                        ->timezone('Asia/Kuala_Lumpur')
+                        ->format('Y-m-d H:i')
+                        : null,
+
+                    'clock_out' => $att->clock_out
+                        ? Carbon::parse($att->clock_out)
+                        ->timezone('Asia/Kuala_Lumpur')
+                        ->format('Y-m-d H:i')
+                        : null,
+                ];
+            });
 
         return response()->json([
             'data' => $records,
