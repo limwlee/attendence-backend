@@ -20,18 +20,28 @@ RUN a2enmod rewrite
 
 WORKDIR /var/www/html
 
-COPY composer.json composer.lock ./
+COPY . .
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install \
+    --no-dev \
+    --optimize-autoloader \
+    --no-interaction \
+    --no-progress \
+    --prefer-dist \
+    --ignore-platform-reqs
 
-COPY . .
-
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-
-RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf && \
-    sed -ri -e 's!/var/www/!/var/www/html/public!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+RUN rm /etc/apache2/sites-enabled/000-default.conf && \
+    echo '<VirtualHost *:80> \
+    ServerName localhost \
+    DocumentRoot /var/www/html/public \
+    <Directory /var/www/html/public> \
+        AllowOverride All \
+        Require all granted \
+    </Directory> \
+</VirtualHost>' > /etc/apache2/sites-available/laravel.conf && \
+    a2ensite laravel.conf
 
 RUN chown -R www-data:www-data storage bootstrap/cache
 
